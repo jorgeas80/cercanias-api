@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-Django settings for rest_example project.
+Django settings for cercanias project.
 
 For more information on this file, see
 https://docs.djangoproject.com/en/1.6/topics/settings/
@@ -37,7 +38,7 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'restapp',
+    'cercanias_api',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -49,9 +50,9 @@ MIDDLEWARE_CLASSES = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'rest_example.urls'
+ROOT_URLCONF = 'cercanias.urls'
 
-WSGI_APPLICATION = 'rest_example.wsgi.application'
+WSGI_APPLICATION = 'cercanias.wsgi.application'
 
 
 # Database
@@ -81,4 +82,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
+
+

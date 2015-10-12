@@ -1,0 +1,1 @@
+web: gunicorn cercanias.wsgi:application --log-file -

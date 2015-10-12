@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-WSGI config for rest_example project.
+WSGI config for cercanias project.
 
 It exposes the WSGI callable as a module-level variable named ``application``.
 
@@ -8,7 +9,9 @@ https://docs.djangoproject.com/en/1.6/howto/deployment/wsgi/
 """
 
 import os
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "rest_example.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "cercanias.settings")
 
 from django.core.wsgi import get_wsgi_application
-application = get_wsgi_application()
+from dj_static import Cling
+
+application = application = Cling(get_wsgi_application())

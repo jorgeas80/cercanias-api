@@ -1,2 +1,5 @@
-Django==1.6.5
-djangorestframework==2.4.4
+Django
+djangorestframework
+pymongo
+gunicorn
+dj-static
