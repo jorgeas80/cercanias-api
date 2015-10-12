@@ -68,3 +68,6 @@ target/
 db.sqlite3
 media/
 static_files/
+
+# Environment variables
+*.sh
