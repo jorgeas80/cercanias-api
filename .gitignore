@@ -71,3 +71,6 @@ static_files/
 
 # Environment variables
 *.sh
+
+# Local settings
+local_settings.py

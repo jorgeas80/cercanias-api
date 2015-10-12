@@ -13,6 +13,12 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
+try:
+    from local_settings import *
+except ImportError:
+    import sys
+    sys.stderr.write("Warning: Can't find the file 'local_settings.py")
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.6/howto/deployment/checklist/
