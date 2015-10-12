@@ -1,2 +1,2 @@
-
-An example app for buidling an API with Django REST framework
+# cercanias-api
+API REST para servir los horarios de los trenes de cercanías Renfe
