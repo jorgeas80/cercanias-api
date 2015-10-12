@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 
 
-from restapp.serializers import UserSerializer
+from cercanias_api.serializers import UserSerializer
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
