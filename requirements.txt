@@ -1,3 +1,5 @@
 Django
 djangorestframework
 pymongo
+gunicorn
+dj-static
