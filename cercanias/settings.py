@@ -93,6 +93,7 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
 
-CORS_ORIGIN_WHITELIST = (
-    'jorgeas80.github.com',
-)
+CORS_ORIGIN_ALLOW_ALL = True
+#CORS_ORIGIN_WHITELIST = (
+#    'jorgeas80.github.com',
+#)
