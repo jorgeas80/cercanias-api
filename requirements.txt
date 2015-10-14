@@ -3,3 +3,4 @@ djangorestframework
 pymongo
 gunicorn
 dj-static
+django-cors-headers
