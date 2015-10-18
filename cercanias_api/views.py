@@ -29,7 +29,7 @@ class CityList(APIView):
         cities = mongo_db[mongo_collection]
 
         # Get all cities as json array
-        cursor = cities.find(projection={'nucleo_id': True, 'nucleo_name': True, '_id': False}).sort("nucleo_name", 1)
+        cursor = cities.find(projection={'nucleo_id': True, 'nucleo_name': True, 'nucleo_stations': True, '_id': False}).sort("nucleo_name", 1)
 
         # Get JSON string from cursor, containing all the elements
         dump_data = dumps(cursor)
