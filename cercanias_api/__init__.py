@@ -31,7 +31,7 @@ def get_cities_cursor(q=None):
             return cities.find(filter=q,
                 projection={'nucleo_id': True, 'nucleo_name': True,
                 'nucleo_stations': True, '_id': False})
-        except TypeError, e:
+        except TypeError as e:
             # TODO: Do something with this error
             return None
     else:

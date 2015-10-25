@@ -132,12 +132,12 @@ class Schedule(APIView):
                 table = s.find('table')
 
                 if not table:
-                    raise NotFound(u"No trains found for those stations today.")
+                    raise NotFound(u"No trains found between those stations today.")
 
                 rows = table.find_all('tr')
 
                 if not rows:
-                    raise NotFound(u"No trains found for those stations today.")
+                    raise NotFound(u"No trains found between those stations today.")
 
                 first_row_cols = rows[1].find_all("td")
 
@@ -165,9 +165,9 @@ class Schedule(APIView):
 
 
                 return Response(data, status=status.HTTP_200_OK)
-            except NotFound, e:
+            except NotFound as e:
                 raise e
-            except Exception, e:
+            except Exception as e:
                 return Response(
                     "Internal server error, please try again later.",
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR)
