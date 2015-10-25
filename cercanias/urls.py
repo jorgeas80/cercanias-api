@@ -14,5 +14,6 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^user/', views.UserList.as_view()),
     url(r'^users/(?P<pk>[0-9]+)/$', views.UserDetail.as_view()),
+    url(r'^city/(?P<pk>[0-9]+)/$', views.CityDetail.as_view()),
     url(r'^city/', views.CityList.as_view()),
 )

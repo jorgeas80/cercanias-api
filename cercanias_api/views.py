@@ -39,6 +39,36 @@ class CityList(APIView):
 
         return Response(data, status=status.HTTP_200_OK)
 
+class CityDetail(APIView):
+    """
+        Retrieve, update or delete a city instance
+    """
+    def get(self, request, pk, format=None):
+        # TODO: We should use a connection pool or something like that
+        mongo_db_name = os.environ.get('MONGO_DBNAME')
+        mongo_url = os.environ.get('MONGO_DBURI')
+        mongo_collection = os.environ.get('MONGO_COLLECTION')
+
+        # Connect with mongo
+        mongo_client = pymongo.MongoClient(mongo_url)
+        mongo_db = mongo_client[mongo_db_name]
+        cities = mongo_db[mongo_collection]
+
+        city_cursor = cities.find_one({'nucleo_id': pk},
+            projection={'nucleo_id': True, 'nucleo_name': True,
+            'nucleo_stations': True, '_id': False})
+
+        if not city_cursor:
+            raise Http404
+
+        # Get JSON string from cursor, containing the city data
+        dump_data = dumps(city_cursor)
+
+        # Build JSON object and return it
+        data = loads(dump_data)
+
+        return Response(data, status=status.HTTP_200_OK)
+
 
 class UserList(APIView):
     """
