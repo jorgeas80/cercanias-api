@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from rest_framework.exceptions import APIException
+import os
+import pymongo
 
 class RenfeServiceUnavailable(APIException):
     status_code = 503
@@ -8,3 +10,27 @@ class RenfeServiceUnavailable(APIException):
 class RenfeServiceChanged(APIException):
     status_code = 504
     default_detail = 'Renfe service taking too long to answer, try again later.'
+
+
+def get_cities_cursor(q=None):
+    # TODO: We should use a connection pool or something like that
+    mongo_db_name = os.environ.get('MONGO_DBNAME')
+    mongo_url = os.environ.get('MONGO_DBURI')
+    mongo_collection = os.environ.get('MONGO_COLLECTION')
+
+    # Connect with mongo
+    mongo_client = pymongo.MongoClient(mongo_url)
+    mongo_db = mongo_client[mongo_db_name]
+    cities = mongo_db[mongo_collection]
+
+    if q:
+        try:
+            return cities.find(filter=q,
+                projection={'nucleo_id': True, 'nucleo_name': True,
+                'nucleo_stations': True, '_id': False})
+        except TypeError, e:
+            # TODO: Do something with this error
+            return None
+    else:
+        return cities.find(projection={'nucleo_id': True, 'nucleo_name': True,
+        'nucleo_stations': True, '_id': False})

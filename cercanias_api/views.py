@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
 from django.contrib.auth.models import User
 
-
 from cercanias_api.serializers import UserSerializer
 from django.http import Http404, HttpResponseServerError, HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.exceptions import *
 from rest_framework import status
-import pymongo
 from bson.json_util import dumps, loads
-import os
 from bs4 import BeautifulSoup as bs
 from datetime import datetime
-from . import RenfeServiceUnavailable, RenfeServiceChanged
+from . import *
 import requests
 
 
@@ -22,57 +19,45 @@ class CityList(APIView):
     List all cities with cercanias stations in Spain
     """
     def get(self, request, format=None):
+        # Get all cities. No filter
+        cursor = get_cities_cursor()
 
-        # TODO: We should use a connection pool or something like that
-        mongo_db_name = os.environ.get('MONGO_DBNAME')
-        mongo_url = os.environ.get('MONGO_DBURI')
-        mongo_collection = os.environ.get('MONGO_COLLECTION')
+        if cursor:
+            # Get JSON string from cursor, containing all the elements
+            dump_data = dumps(cursor)
 
-        # Connect with mongo
-        mongo_client = pymongo.MongoClient(mongo_url)
-        mongo_db = mongo_client[mongo_db_name]
-        cities = mongo_db[mongo_collection]
+            # Build JSON object and return it
+            data = loads(dump_data)
 
-        # Get all cities as json array
-        cursor = cities.find(projection={'nucleo_id': True, 'nucleo_name': True, 'nucleo_stations': True, '_id': False}).sort("nucleo_name", 1)
+            return Response(data, status=status.HTTP_200_OK)
 
-        # Get JSON string from cursor, containing all the elements
-        dump_data = dumps(cursor)
-
-        # Build JSON object and return it
-        data = loads(dump_data)
-
-        return Response(data, status=status.HTTP_200_OK)
+        else:
+            return HttpResponseServerError(
+                "Internal server error, please try again later.")
 
 class CityDetail(APIView):
     """
         Retrieve a city instance
     """
     def get(self, request, pk, format=None):
-        # TODO: We should use a connection pool or something like that
-        mongo_db_name = os.environ.get('MONGO_DBNAME')
-        mongo_url = os.environ.get('MONGO_DBURI')
-        mongo_collection = os.environ.get('MONGO_COLLECTION')
+        # Get one specifc city
+        cursor = get_cities_cursor(q={'nucleo_id': pk})
 
-        # Connect with mongo
-        mongo_client = pymongo.MongoClient(mongo_url)
-        mongo_db = mongo_client[mongo_db_name]
-        cities = mongo_db[mongo_collection]
+        if cursor and cursor.count() > 0:
+            city_cursor = cursor.next()
 
-        city_cursor = cities.find_one({'nucleo_id': pk},
-            projection={'nucleo_id': True, 'nucleo_name': True,
-            'nucleo_stations': True, '_id': False})
+            # Get JSON string from cursor, containing the city data
+            dump_data = dumps(city_cursor)
 
-        if not city_cursor:
-            raise Http404
+            # Build JSON object and return it
+            data = loads(dump_data)
 
-        # Get JSON string from cursor, containing the city data
-        dump_data = dumps(city_cursor)
+            return Response(data, status=status.HTTP_200_OK)
 
-        # Build JSON object and return it
-        data = loads(dump_data)
+        else:
+            raise Http404("City not found")
 
-        return Response(data, status=status.HTTP_200_OK)
+
 
 class Schedule(APIView):
     """
