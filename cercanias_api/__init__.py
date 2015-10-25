@@ -39,6 +39,9 @@ def get_cities_cursor(q=None):
         'nucleo_stations': True, '_id': False})
 
 def time_to_hour(hour_string):
+    """
+        Calculates difference between now and the hour passed as argument
+    """
     madrid_tz = timezone('Europe/Madrid')
 
     today_str = datetime.now().date().strftime("%Y-%m-%d") + ' ' + hour_string
@@ -49,4 +52,9 @@ def time_to_hour(hour_string):
 
     diff = d - now
 
-    return diff
+    seconds = diff.total_seconds()
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    seconds = seconds % 60
+
+    return (hours, minutes)

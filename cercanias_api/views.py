@@ -61,6 +61,31 @@ class CityDetail(APIView):
 
 
 class Schedule(APIView):
+
+    def get_two_next_trains(self, rows, starting=2):
+        hours = -1
+        minutes = 0
+
+        row_counter = starting
+
+        times = []
+
+        # Get next train (Renfe just allows passing hours, not minutes)
+        while hours < 0:
+            hour_str = rows[row_counter].find_all("td")[1].text.strip()
+            (hours, minutes) = time_to_hour(hour_str)
+            if hours > 0:
+                times.append([hours, minutes])
+            row_counter = row_counter + 1
+
+        # Now get the next one, if any
+        if row_counter < len(list(rows)):
+            hour_str = rows[row_counter].find_all("td")[1].text.strip()
+            (hours, minutes) = time_to_hour(hour_str)
+            times.append([hours, minutes])
+
+        return times
+
     """
         Retrieve the time table for a trip between two cities
     """
@@ -83,6 +108,8 @@ class Schedule(APIView):
             "o": orig
         }
 
+        data = []
+
         try:
             r = requests.post("http://horarios.renfe.com/cer/hjcer310.jsp",
                 data=form_data)
@@ -92,8 +119,9 @@ class Schedule(APIView):
         except requests.exceptions.TooManyRedirects:
             raise RenfeServiceChanged()
         except requests.exceptions.RequestException as e:
-            return HttpResponseServerError(
-                "Internal server error, please try again later.")
+            return Response(
+                "Internal server error, please try again later.",
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         if r:
             try:
@@ -103,21 +131,29 @@ class Schedule(APIView):
 
                 first_row_cols = rows[1].find_all("td")
 
+                import ipdb; ipdb.set_trace()
+
                 # no transfer. Init time is the column 1 of the row 2
                 if len(first_row_cols) == 4:
-                    hour = rows[2].find_all("td")[1].text.strip()
+                    times = self.get_two_next_trains(rows, 2)
 
                 # 1 transfer. Init time is the column 1 of the row 4
                 elif len(first_row_cols) == 6:
-                    hour = rows[4].find_all("td")[1].text.strip()
+                    times = self.get_two_next_trains(rows, 4)
 
                 # 2 transfers. Init time is the column 1 of the row 4
                 elif len(first_row_cols) == 7:
-                    hour = rows[4].find_all("td")[1].text.strip()
-                else:
-                    hour = u"00:00"
+                    times = self.get_two_next_trains(rows, 4)
 
-                data = str(time_to_hour(hour))
+                # something unexpected happened
+                else:
+                    # TODO: Handle this
+                    return Response(
+                        "Internal server error, please try again later.",
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+                for hours, minutes in times:
+                    data.append("{}h:{}min".format(int(hours), int(minutes)) if int(hours) != 0 else "{}min".format(int(minutes)))
 
                 """
                 data = []
@@ -134,11 +170,13 @@ class Schedule(APIView):
 
                 return Response(data, status=status.HTTP_200_OK)
             except Exception, e:
-                return HttpResponseServerError(
-                    "Internal server error, please try again later.")
+                return Response(
+                    "Internal server error, please try again later.",
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            return HttpResponseServerError(
-                "Internal server error, please try again later.")
+            return Response(
+                "Internal server error, please try again later.",
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
