@@ -4,3 +4,5 @@ pymongo
 gunicorn
 dj-static
 django-cors-headers
+beautifulsoup4
+requests

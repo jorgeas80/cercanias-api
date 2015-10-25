@@ -3,13 +3,18 @@ from django.contrib.auth.models import User
 
 
 from cercanias_api.serializers import UserSerializer
-from django.http import Http404
+from django.http import Http404, HttpResponseServerError, HttpResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import *
 from rest_framework import status
 import pymongo
 from bson.json_util import dumps, loads
 import os
+from bs4 import BeautifulSoup as bs
+from datetime import datetime
+from . import RenfeServiceUnavailable, RenfeServiceChanged
+import requests
 
 
 class CityList(APIView):
@@ -41,7 +46,7 @@ class CityList(APIView):
 
 class CityDetail(APIView):
     """
-        Retrieve, update or delete a city instance
+        Retrieve a city instance
     """
     def get(self, request, pk, format=None):
         # TODO: We should use a connection pool or something like that
@@ -68,6 +73,50 @@ class CityDetail(APIView):
         data = loads(dump_data)
 
         return Response(data, status=status.HTTP_200_OK)
+
+class Schedule(APIView):
+    """
+        Retrieve the time table for a trip between two cities
+    """
+    def get(self, request, nucleo, orig, dst, format=None):
+        # Today
+        today_nospaces = datetime.now().date().strftime("%Y%m%d")
+
+        # Send Renfe form
+        r = None
+        form_data = {
+            "TXTInfo": "",
+            "cp": "NO",
+            "d": dst,
+            "df": today_nospaces,
+            "hd": "26",
+            "ho": "00",
+            "i": "s",
+            "nucleo": nucleo,
+            "o": orig
+        }
+
+        try:
+            r = requests.post("http://horarios.renfe.com/cer/hjcer310.jsp",
+                data=form_data)
+        except requests.exceptions.Timeout:
+            # TODO: Maybe set up for a retry, or continue in a retry loop
+            raise RenfeServiceUnavailable()
+        except requests.exceptions.TooManyRedirects:
+            raise RenfeServiceChanged()
+        except requests.exceptions.RequestException as e:
+            return HttpResponseServerError(
+                "Internal server error, please try again later.")
+
+        if r:
+            s = bs(r.content)
+
+            return HttpResponse(s)
+
+        else:
+            return HttpResponseServerError(
+                "Internal server error, please try again later.")
+
 
 
 class UserList(APIView):
