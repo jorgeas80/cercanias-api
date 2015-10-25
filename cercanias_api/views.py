@@ -74,7 +74,7 @@ class Schedule(APIView):
         while hours < 0:
             hour_str = rows[row_counter].find_all("td")[1].text.strip()
             (hours, minutes) = time_to_hour(hour_str)
-            if hours > 0:
+            if hours >= 0:
                 times.append([hours, minutes])
             row_counter = row_counter + 1
 
@@ -90,12 +90,15 @@ class Schedule(APIView):
         Retrieve the time table for a trip between two cities
     """
     def get(self, request, nucleo, orig, dst, format=None):
-        # Today
-        today_date = datetime.now().strftime("%Y%m%d")
-        today_hour = datetime.now().strftime("%H")
+
+        now = datetime.now()
+
+        # Today, in Spain timezone
+        today_date = now.strftime("%Y%m%d")
+        today_hour = now.strftime("%H")
 
         # Send Renfe form
-        r = None
+        req = None
         form_data = {
             "TXTInfo": "",
             "cp": "NO",
@@ -111,7 +114,7 @@ class Schedule(APIView):
         data = []
 
         try:
-            r = requests.post("http://horarios.renfe.com/cer/hjcer310.jsp",
+            req = requests.post("http://horarios.renfe.com/cer/hjcer310.jsp",
                 data=form_data)
         except requests.exceptions.Timeout:
             # TODO: Maybe set up for a retry, or continue in a retry loop
@@ -123,18 +126,23 @@ class Schedule(APIView):
                 "Internal server error, please try again later.",
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        if r:
+        if req:
             try:
-                s = bs(r.content, "html.parser")
+                s = bs(req.content, "html.parser")
                 table = s.find('table')
+
+                if not table:
+                    raise NotFound(u"No trains found for those stations today.")
+
                 rows = table.find_all('tr')
+
+                if not rows:
+                    raise NotFound(u"No trains found for those stations today.")
 
                 first_row_cols = rows[1].find_all("td")
 
-                import ipdb; ipdb.set_trace()
-
                 # no transfer. Init time is the column 1 of the row 2
-                if len(first_row_cols) == 4:
+                if len(first_row_cols) == 5:
                     times = self.get_two_next_trains(rows, 2)
 
                 # 1 transfer. Init time is the column 1 of the row 4
@@ -155,20 +163,10 @@ class Schedule(APIView):
                 for hours, minutes in times:
                     data.append("{}h:{}min".format(int(hours), int(minutes)) if int(hours) != 0 else "{}min".format(int(minutes)))
 
-                """
-                data = []
-                for row in rows:
-                    cols = row.find_all('td')
-                    cols = [re.sub('[\r\n]', '', ele.text.strip()) for ele in cols]
-
-                    for col in cols:
-                        col = re.sub('[^\W\d_]', '', col)
-                        if col:
-                            data.append({"col": col})
-                """
-
 
                 return Response(data, status=status.HTTP_200_OK)
+            except NotFound, e:
+                raise e
             except Exception, e:
                 return Response(
                     "Internal server error, please try again later.",

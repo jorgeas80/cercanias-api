@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 from rest_framework.exceptions import APIException
+from django.utils import timezone
 import os
 import pymongo
 from datetime import datetime
-from pytz import timezone
-import pytz
+
 
 class RenfeServiceUnavailable(APIException):
     status_code = 503
@@ -42,14 +42,13 @@ def time_to_hour(hour_string):
     """
         Calculates difference between now and the hour passed as argument
     """
-    madrid_tz = timezone('Europe/Madrid')
 
-    today_str = datetime.now().date().strftime("%Y-%m-%d") + ' ' + hour_string
-    formatted_date = datetime.strptime(today_str, "%Y-%m-%d %H.%M")
+    # Build a time string using the hour string passed as arg
+    now = datetime.now()
+    today_str = now.date().strftime("%Y-%m-%d") + ' ' + hour_string
+    d = datetime.strptime(today_str, "%Y-%m-%d %H.%M")
 
-    now = madrid_tz.localize(datetime.now())
-    d = madrid_tz.localize(formatted_date)
-
+    # Difference between the built time string and now
     diff = d - now
 
     seconds = diff.total_seconds()
