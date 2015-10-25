@@ -12,6 +12,7 @@ from bs4 import BeautifulSoup as bs
 from datetime import datetime
 from . import *
 import requests
+import re
 
 
 class CityList(APIView):
@@ -65,7 +66,8 @@ class Schedule(APIView):
     """
     def get(self, request, nucleo, orig, dst, format=None):
         # Today
-        today_nospaces = datetime.now().date().strftime("%Y%m%d")
+        today_date = datetime.now().strftime("%Y%m%d")
+        today_hour = datetime.now().strftime("%H")
 
         # Send Renfe form
         r = None
@@ -73,9 +75,9 @@ class Schedule(APIView):
             "TXTInfo": "",
             "cp": "NO",
             "d": dst,
-            "df": today_nospaces,
+            "df": today_date,
             "hd": "26",
-            "ho": "00",
+            "ho": today_hour,
             "i": "s",
             "nucleo": nucleo,
             "o": orig
@@ -94,10 +96,46 @@ class Schedule(APIView):
                 "Internal server error, please try again later.")
 
         if r:
-            s = bs(r.content)
+            try:
+                s = bs(r.content, "html.parser")
+                table = s.find('table')
+                rows = table.find_all('tr')
 
-            return HttpResponse(s)
+                first_row_cols = rows[1].find_all("td")
 
+                # no transfer. Init time is the column 1 of the row 2
+                if len(first_row_cols) == 4:
+                    hour = rows[2].find_all("td")[1].text.strip()
+
+                # 1 transfer. Init time is the column 1 of the row 4
+                elif len(first_row_cols) == 6:
+                    hour = rows[4].find_all("td")[1].text.strip()
+
+                # 2 transfers. Init time is the column 1 of the row 4
+                elif len(first_row_cols) == 7:
+                    hour = rows[4].find_all("td")[1].text.strip()
+                else:
+                    hour = u"00:00"
+
+                data = str(time_to_hour(hour))
+
+                """
+                data = []
+                for row in rows:
+                    cols = row.find_all('td')
+                    cols = [re.sub('[\r\n]', '', ele.text.strip()) for ele in cols]
+
+                    for col in cols:
+                        col = re.sub('[^\W\d_]', '', col)
+                        if col:
+                            data.append({"col": col})
+                """
+
+
+                return Response(data, status=status.HTTP_200_OK)
+            except Exception, e:
+                return HttpResponseServerError(
+                    "Internal server error, please try again later.")
         else:
             return HttpResponseServerError(
                 "Internal server error, please try again later.")

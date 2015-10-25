@@ -2,6 +2,9 @@
 from rest_framework.exceptions import APIException
 import os
 import pymongo
+from datetime import datetime
+from pytz import timezone
+import pytz
 
 class RenfeServiceUnavailable(APIException):
     status_code = 503
@@ -34,3 +37,16 @@ def get_cities_cursor(q=None):
     else:
         return cities.find(projection={'nucleo_id': True, 'nucleo_name': True,
         'nucleo_stations': True, '_id': False})
+
+def time_to_hour(hour_string):
+    madrid_tz = timezone('Europe/Madrid')
+
+    today_str = datetime.now().date().strftime("%Y-%m-%d") + ' ' + hour_string
+    formatted_date = datetime.strptime(today_str, "%Y-%m-%d %H.%M")
+
+    now = madrid_tz.localize(datetime.now())
+    d = madrid_tz.localize(formatted_date)
+
+    diff = d - now
+
+    return diff
